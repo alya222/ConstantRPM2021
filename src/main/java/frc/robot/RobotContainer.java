@@ -25,7 +25,6 @@ import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import frc.robot.shooter.ChangePosition;
 import frc.robot.shooter.Conveyor;
-import frc.robot.shooter.Plucker;
 import frc.robot.vision.AimTarget;
 import frc.robot.vision.Limelight;
 import frc.robot.climber.Lift;
@@ -66,18 +65,18 @@ public class RobotContainer {
 
   private ChangePosition goalMover = new ChangePosition();
 
+  private ChangePosition changePosition = new ChangePosition();
+
   private final Lift lift = new Lift();
 
   private final Shooter shooter = new Shooter(goalMover, limelight);
 
   private final Conveyor conveyor = new Conveyor(goalMover);
 
-  private final Plucker plucker = new Plucker(goalMover);
-
   private final Gears gears = new Gears();
 
   // Update PID values
-  private final Update update = new Update(shooter, plucker);
+  private final Update update = new Update(shooter, changePosition);
 
   //  --- Default Commands ---
 
@@ -101,18 +100,15 @@ public class RobotContainer {
 
   private SequentialCommandGroup waitAndFeed = new SequentialCommandGroup(
     // When in collecting pose, the time delay is not needed, so it is interrupted 
-    new WaitCommand(shooterRampUpTime).withInterrupt(goalMover::isCollectingPose),
-    new InstantCommand(() -> plucker.setSpeed(), plucker), 
+    new WaitCommand(shooterRampUpTime).withInterrupt(goalMover::isCollectingPose), 
     new InstantCommand(() -> conveyor.setSpeed(), conveyor));
 
   private SequentialCommandGroup waitUntilVelocity = new SequentialCommandGroup(
     new WaitUntilCommand(() -> shooter.atSpeed()),
-    new InstantCommand(() -> plucker.setSpeed(), plucker), 
     new InstantCommand(() -> conveyor.setSpeed(), conveyor)
   );
 
   private SequentialCommandGroup stopFeeders = new SequentialCommandGroup(
-    new InstantCommand(() -> plucker.stop(), plucker),
     new InstantCommand(() -> conveyor.stop(), conveyor));
 
   // Autonomous 
@@ -122,10 +118,8 @@ public class RobotContainer {
     new InstantCommand(() -> goalMover.shootPose(), goalMover),
     new InstantCommand(() -> shooter.setSpeedSpark(), shooter),
     new WaitCommand(shooterRampUpTime).withInterrupt(goalMover::isCollectingPose),
-    new InstantCommand(() -> plucker.setSpeed(), plucker), 
     new InstantCommand(() -> conveyor.setSpeed(), conveyor),
     new WaitCommand(2 + shooterRampUpTime),
-    new InstantCommand(() -> plucker.stop(), plucker),
     new InstantCommand(() -> conveyor.stop(), conveyor),
     new InstantCommand(() -> shooter.stop(), shooter),
     new RunCommand(() -> rDrive.getDifferentialDrive().tankDrive(0.4, 0.4), rDrive).withTimeout(2)
@@ -169,30 +163,20 @@ public class RobotContainer {
     // Shoot or intake with voltage, aiming for low goal
     new JoystickButton(xbox, kBumperLeft.value)
     .whenPressed(new InstantCommand(() -> shooter.toggleSpeedVolts(), shooter))
-    .whenPressed(new InstantCommand(() -> conveyor.toggleSpeed(), shooter))
-    .whenPressed(new InstantCommand(() -> plucker.toggleSpeed(), plucker));
-    
-    // Shoot or intake with set velocity, specifically for high goal
-    new JoystickButton(xbox, kB.value)
-    .whenPressed(new InstantCommand(() -> plucker.toggleSpeed(), plucker));
+    .whenPressed(new InstantCommand(() -> conveyor.toggleSpeed(), shooter));
     
     // Toggles high shooting
     new JoystickButton(xbox, kY.value)
     .whenPressed(new InstantCommand(() -> shooter.toggleSpeedSpark()))
     .whenPressed(new ConditionalCommand(waitUntilVelocity, stopFeeders, shooter::isEngaged));
 
-    // Vision correction
+    // Vision correction 
     new JoystickButton(xbox, kX.value)
     .whileHeld(new AimTarget(limelight, rDrive));
 
     // Switch Gears
     new JoystickButton(xbox, kBumperRight.value)
     .whenPressed(() -> gears.switchGears(), gears);
-
-    new JoystickButton(xbox, kStart.value)
-    .whenPressed(new InstantCommand(() -> shooter.zoneSwitch(), shooter))
-    .whenPressed(new PrintCommand("Pressed"));
-    
   }
 
   public void init(){
@@ -201,14 +185,10 @@ public class RobotContainer {
     limelight.PiPSecondaryStream();
 
     shooter.stop();
-    plucker.stop();
     conveyor.stop();
   } 
 
   public void periodic() {
-
-    SmartDashboard.putString("Shooter Postion:", shooter.selector.positionName);
-    SmartDashboard.putNumber("Set RPM", shooter.shooterRPM);
 
     update.periodic();
   }

@@ -51,9 +51,6 @@ public final class Constants {
 	// Conveyor belt motor port
 	public static final int kConveyorPort = 8;
 
-	// Feeder wheel motor port
-	public static final int kPluckerPort = 6;
-
 	// Solenoid controlling gear ports 
 	public static final int leftGearPort = 2;
 	public static final int rightGearPort = 3;
@@ -94,19 +91,15 @@ public final class Constants {
 
 	public static final double inConveyorVolts = -12;
 	public static final double outConveyorVolts = 12;
-	
-	public static final double inPluckerVolts = -12;
-	public static final double outPluckerVolts = 12;
 
 	public static final double intakeRPM = -1000;
 	public static final double shooterRPM = 3000;
-	
-	public static final double nearShooterRPM = 2300;
-    public static final double midShooterRPM = 3000;
-    public static final double farShooterRPM = 3500;
 
 	public static final double colorSwitchSpeed = 0.2;
 	public static final double colorSpeed = 0.1;
+
+	public static final String shootingPosition = "Shooting Position";
+	public static final String intakePosition = "Intake Position";
 
 	// Field Measurements
 	public static final double cameraHeight = Units.inchesToMeters(30);

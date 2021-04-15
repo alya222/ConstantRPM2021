@@ -58,6 +58,17 @@ public class ChangePosition extends SubsystemBase {
     collecting = false;
     System.out.println("Shooting Pose Set");
   }
+  
+  public final String stringShooterPosition() {
+    if (collecting = true) {
+      return intakePosition;
+    
+    } else {
+      
+      return shootingPosition;
+  
+    }
+  }
 
   @Override
   public void periodic() {
